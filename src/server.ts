@@ -5,7 +5,7 @@ import eventRoute from "./routes/EventRoute";
 import cors, {CorsOptions} from 'cors';
 
 const app = express()
-const port = 3000
+const port = process.env.PORT || 3000;
 app.use(express.json())
 const corsOptions:CorsOptions = {
     origin: ['http://localhost:5050'],
@@ -28,10 +28,9 @@ app.post('/upload', upload.single('file'), async (req: any, res: any) => {
         
                 const bucket = 'images';
             const filePath = `uploads/${file.originalname}`;
+          const fileKey = await uploadFile(bucket, filePath, file);
 
-            await uploadFile(bucket, filePath, file);
-        
-                res.status(200).send('File uploaded successfully.');
+          res.status(200).send(fileKey);
           } catch (error) {
             res.status(500).send('Error uploading file.');
           }
@@ -52,6 +51,22 @@ app.listen(port, () => {
  webApp.listen(webPort, () => {
         console.log(`WebApp listening at http://localhost:${webPort}`)
      })
+ app.get('/presignedUrl', async (req: Request, res: Response) => {
+         try {
+                 const { key } = req.query;
+                 if (!key || typeof key !== 'string') {
+                         return res.status(400).send('File key is required.');
+                     }
+                 const bucket = 'images';
+                 const { getPresignedUrl } = await import('./services/UploadFileService');
+                 const presignedUrl = await getPresignedUrl(bucket, key, 3600);
+                 res.status(200).json({ url: presignedUrl });
+            } catch (error) {
+                 console.error('Error generating presigned URL:', error);
+                 res.status(500).send('Error generating presigned URL.');
+             }
+     });
+
 
 
 

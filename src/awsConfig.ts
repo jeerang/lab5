@@ -2,7 +2,7 @@ import {S3Client} from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 dotenv.config();
 
-import { S3Client } from "@aws-sdk/client-s3";
+
 
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
@@ -21,11 +21,11 @@ if (!accessKeyId || !secretAccessKey || !endpoint || !region) {
 
 const s3Client = new S3Client({
     credentials: {
-        accessKeyId: accessKeyId!,
-        secretAccessKey: secretAccessKey!,
+        accessKeyId,
+        secretAccessKey,
     },
-    endpoint: endpoint!,
-    region: region!,
+    endpoint,
+    region,
     forcePathStyle: true,
 });
 

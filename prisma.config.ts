@@ -3,19 +3,32 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-// Prefer DIRECT_URL, fall back to DATABASE_URL. Throw a clear error if neither is set.
-const directUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
-if (!directUrl) {
+// Prefer DIRECT_URL, fall back to DATABASE_URL.
+const envDirect = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+const isProd = process.env.NODE_ENV === "production" || !!process.env.RENDER;
+let directUrl: string;
+
+if (envDirect) {
+  directUrl = envDirect;
+} else if (isProd) {
+  // In production we should not silently fall back — fail with a clear error so Render logs show what's missing.
   throw new Error(
-    "PrismaConfigEnvError: Missing required environment variable: DIRECT_URL or DATABASE_URL"
+    "PrismaConfigEnvError: Missing required environment variable: DIRECT_URL or DATABASE_URL. Set it in your Render service environment variables."
   );
+} else {
+  // fallback to a local sqlite file to avoid crashing in development environments where env vars aren't set.
+  // WARNING: This is a safe fallback for development/testing; for production on Render, set DIRECT_URL or DATABASE_URL to your real database connection string.
+  console.warn(
+    "Warning: DIRECT_URL and DATABASE_URL are not set. Falling back to sqlite at file:./dev.db. Set DIRECT_URL/DATABASE_URL in your environment for production."
+  );
+  directUrl = "file:./dev.db";
 }
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-      seed: 'tsx prisma/seed.ts'
+    seed: 'tsx prisma/seed.ts'
   },
   datasource: {
     url: directUrl,
